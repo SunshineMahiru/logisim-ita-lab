@@ -3,12 +3,10 @@
 import os
 import subprocess
 
-import os
-
-# 可用环境变量覆盖：LOGISIM_JAVA / LOGISIM_JAR
-JAVA = os.environ.get('LOGISIM_JAVA', 'D:/appInstall/Java/jdk-21.0.6/bin/java.exe')
+# 可用环境变量覆盖：LOGISIM_JAVA / LOGISIM_JAR / LOGISIM_TOOLS
+JAVA = os.environ.get('LOGISIM_JAVA', 'java')
 JAR = os.environ.get('LOGISIM_JAR', 'Logisim-ITA-2.16.2.0/Logisim-ITA.jar')
-TOOLS = os.environ.get('LOGISIM_TOOLS', '.workbuddy/tools')
+TOOLS = os.environ.get('LOGISIM_TOOLS', 'tools')
 CP = TOOLS + os.pathsep + JAR
 
 
