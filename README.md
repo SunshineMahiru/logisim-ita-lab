@@ -24,22 +24,22 @@
 The workflow takes a problem statement plus a template `.circ`, produces one candidate `.circ`, and routes it to one of three verification paths.
 
 ```text
-┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐
-│ Problem docx or  │────▶│   circ_parser    │────▶│ Topology design  │
-│ template .circ   │     │ (structure JSON) │     │  + circlib emit  │
-└──────────────────┘     └──────────────────┘     └────────┬─────────┘
-                                                           │
-                                                 ┌─────────▼─────────┐
-                                                 │   candidate.circ  │
-                                                 └─────────┬─────────┘
-                    ┌───────────────────┬─────────────────┴──────────┐
-                    ▼                   ▼                            ▼
-          ┌──────────────────┐ ┌──────────────────┐      ┌──────────────────┐
-          │    validate.py   │ │  Logisim-ITA GUI │      │   CircRun.java   │
-          │   gate-level     │ │   manual check   │      │  + runner.py,    │
-          │   comparison     │ │   by poking pins │      │  per-edge drive  │
-          └──────────────────┘ └──────────────────┘      └──────────────────┘
-            combinational      transistor / subcircuit        sequential
+┌───────────────────┐    ┌───────────────────┐    ┌───────────────────┐
+│  Problem docx or  │    │    circ_parser    │    │  Topology design  │
+│   template .circ  │───▶│  (structure JSON) │───▶│   + circlib emit  │
+└───────────────────┘    └───────────────────┘    └─────────┬─────────┘
+                                                            │
+                                   ┌────────────────────────┘
+                         ┌─────────▼─────────┐
+                         │   candidate.circ  │
+                         └─────────┬─────────┘
+          ┌────────────────────────┴────────────────────────┐
+          ▼                        ▼                        ▼
+┌───────────────────┐    ┌───────────────────┐    ┌───────────────────┐
+│    validate.py    │    │  Logisim-ITA GUI  │    │    CircRun.java   │
+│  gate-level check │    │    manual poke    │    │  runner.py, tick  │
+└───────────────────┘    └───────────────────┘    └───────────────────┘
+    combinational      transistor / subcircuit         sequential
 ```
 
 `references/` holds the format manual, the component port table, the sequential-test protocol, and the platform notes. `SKILL.md` is the operating procedure that ties them together.

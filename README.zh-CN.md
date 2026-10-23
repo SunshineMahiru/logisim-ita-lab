@@ -24,22 +24,22 @@
 工作流的输入是题面加模板 `.circ`，中间产物是一份待验证的 `.circ`，然后按电路类型分流到三条验证路径。
 
 ```text
-┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐
-│ Problem docx or  │────▶│   circ_parser    │────▶│ Topology design  │
-│ template .circ   │     │ (structure JSON) │     │  + circlib emit  │
-└──────────────────┘     └──────────────────┘     └────────┬─────────┘
-                                                           │
-                                                 ┌─────────▼─────────┐
-                                                 │   candidate.circ  │
-                                                 └─────────┬─────────┘
-                    ┌───────────────────┬─────────────────┴──────────┐
-                    ▼                   ▼                            ▼
-          ┌──────────────────┐ ┌──────────────────┐      ┌──────────────────┐
-          │    validate.py   │ │  Logisim-ITA GUI │      │   CircRun.java   │
-          │   gate-level     │ │   manual check   │      │  + runner.py,    │
-          │   comparison     │ │   by poking pins │      │  per-edge drive  │
-          └──────────────────┘ └──────────────────┘      └──────────────────┘
-            combinational      transistor / subcircuit        sequential
+┌───────────────────┐    ┌───────────────────┐    ┌───────────────────┐
+│  Problem docx or  │    │    circ_parser    │    │  Topology design  │
+│   template .circ  │───▶│  (structure JSON) │───▶│   + circlib emit  │
+└───────────────────┘    └───────────────────┘    └─────────┬─────────┘
+                                                            │
+                                   ┌────────────────────────┘
+                         ┌─────────▼─────────┐
+                         │   candidate.circ  │
+                         └─────────┬─────────┘
+          ┌────────────────────────┴────────────────────────┐
+          ▼                        ▼                        ▼
+┌───────────────────┐    ┌───────────────────┐    ┌───────────────────┐
+│    validate.py    │    │  Logisim-ITA GUI  │    │    CircRun.java   │
+│  gate-level check │    │    manual poke    │    │  runner.py, tick  │
+└───────────────────┘    └───────────────────┘    └───────────────────┘
+    combinational      transistor / subcircuit         sequential
 ```
 
 `references/` 放格式手册、组件端口表、时序测试规程与平台笔记；`SKILL.md` 是串起这些材料的操作流程。
