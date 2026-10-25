@@ -98,13 +98,17 @@ Tunnel 电气等价，无需画线互连。坐标一律取 10 的倍数；引脚
 
 ### 第 5 步：验证
 
-按电路类型走三条路，不要混用：
+按电路类型走四条路，不要混用：
 
 | 电路类型 | 验证手段 | 命令 |
 |---|---|---|
-| 纯组合逻辑（AND/OR/NOT 等） | 门级仿真对拍真值表 | `python scripts/validate.py <生成.circ> --task lab1.3` |
-| 晶体管级 / 子电路级 | 本地 Logisim-ITA 打开人工核对 | 见下节 |
+| 单比特组合逻辑（AND/OR/NOT 等） | 门级仿真对拍真值表 | `python scripts/validate.py <生成.circ> --task lab1.3` |
+| 多比特组合逻辑（总线、选择器、子电路实例） | 真实引擎逐行 `snap` | `scripts/CircRun.java` + `scripts/runner.py`，向量表见对应 `expN-tasks.md` |
+| 晶体管级（含传输门） | 本地 Logisim-ITA 打开人工核对 | 见下节 |
 | 时序电路（D 触发器 / Register / Counter / 时钟） | 真实引擎逐拍对拍 | 见 `references/timing-verification.md` |
+
+门级仿真器只认单比特门、Pin、Tunnel 与常量；遇到 Splitter、多路选择器、子电路实例会直接
+报「不支持的组件」，这类电路走第二条路。`snap` 输出是十六进制且不补前导零，比对时按整数比。
 
 自定义真值表用 `--table-file truth.json`；`validate.py` 返回码：`0`=全对，`1`=有错，
 `2`=无法自动仿真。时序电路不要用门级仿真器，也不要只靠肉眼核对。
@@ -114,7 +118,7 @@ Tunnel 电气等价，无需画线互连。坐标一律取 10 的倍数；引脚
 
 ## 本地 Logisim-ITA 核对
 
-晶体管级、子电路级与时序电路需要 GUI 核对，或需要跑真实引擎。用环境变量指路，不要把
+晶体管级电路需要在 GUI 里核对；多比特与时序电路要跑真实引擎。用环境变量指路，不要把
 本机路径写进脚本：
 
 | 变量 | 含义 | 缺省 |
@@ -144,6 +148,9 @@ export LOGISIM_JAR="<解压目录>/Logisim-ITA-2.16.2.0/Logisim-ITA.jar"
   提交前自检清单等平台侧实测结论。
 - `references/exp1-tasks.md` —— 实验1 的 5 个任务知识库（逻辑、引脚、真值表、拓扑、坐标），
   同时是新任务的范例格式与回归真值表来源。
+- `references/exp4-tasks.md` —— 实验4 全 5 关的知识库：加法器系列（`CLA4`/`Adder16`/`Adder32`）、
+  32 位桶形移位器（5 级拓扑、三层选择、8 行向量）与 32 位 ALU（ALUctr 全 16 种编码、
+  11 行向量），以及跨文件依赖的处置。
 
 脚本分两组，按验证路径取用：
 
@@ -161,8 +168,10 @@ export LOGISIM_JAR="<解压目录>/Logisim-ITA-2.16.2.0/Logisim-ITA.jar"
 
 ## 扩展新实验任务
 
-1. 在 `references/exp1-tasks.md` 按同样格式追加任务（逻辑、引脚、真值表、约束、拓扑）。
-2. 在 `scripts/validate.py` 的 `BUILTIN` 字典注册该任务的真值表生成函数。
+1. 在对应的 `references/expN-tasks.md` 按同样格式追加任务（逻辑、引脚、真值表、约束、拓扑）；
+   新实验另建文件（如 `exp4-tasks.md`），并在「资源」一节登记。
+2. 单比特组合逻辑的任务，才在 `scripts/validate.py` 的 `BUILTIN` 字典注册真值表生成函数；
+   多比特与时序任务把向量写进 `expN-tasks.md` 的向量表，用 `runner.py` 逐行对拍。
 3. 若新任务引入新组件（加法器、寄存器、ROM 等），先 `Dump` 量端口坐标，补进
    `references/components.md`，再写生成代码；不要凭记忆推坐标。
 4. **时序电路一律按 `references/timing-verification.md` 的流程验证**：结构自检 → 功能对拍 →
