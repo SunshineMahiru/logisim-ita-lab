@@ -13,15 +13,15 @@
 ## Highlights
 
 - **Circuits as text.** A `.circ` file is UTF-8 XML, so a circuit can be generated, diffed, and reviewed without clicking through a GUI.
-- **Two verification paths, chosen by circuit kind.** Gate-level simulation for combinational logic; the real Logisim engine, tick by tick, for sequential logic.
+- **Four verification paths, chosen by circuit kind.** Gate-level simulation for single-bit combinational logic; the real Logisim engine, vector by vector, for multi-bit combinational and sequential logic; a GUI check for transistor-level nets.
 - **Measured, not guessed.** Component port coordinates were read back from Logisim-ITA 2.16.2.0 with a dump tool, and the tables record what was actually observed.
 - **Stdlib-only Python.** Parser, gate-level simulator, and truth-table validator need no third-party packages. Java is needed only when the real engine has to run.
-- **Knowledge base included.** `references/exp1-tasks.md` records the five Lab 1 tasks: logic, pins, truth table, topology, coordinates.
+- **Knowledge base included.** `references/exp1-tasks.md` and `references/exp4-tasks.md` record Lab 1 and Lab 4: logic, pins, truth tables, topologies, port coordinates, and the ALU control encoding.
 - **Offline self-test.** `scripts/selftest.py` exercises the whole parser → generator → simulator → validator chain and needs no Java.
 
 ## Architecture
 
-The workflow takes a problem statement plus a template `.circ`, produces one candidate `.circ`, and routes it to one of three verification paths.
+The workflow takes a problem statement plus a template `.circ`, produces one candidate `.circ`, and routes it by circuit kind to one of four verification paths; the diagram groups the paths by tool.
 
 ```text
 ┌───────────────────┐    ┌───────────────────┐    ┌───────────────────┐
@@ -37,9 +37,9 @@ The workflow takes a problem statement plus a template `.circ`, produces one can
           ▼                        ▼                        ▼
 ┌───────────────────┐    ┌───────────────────┐    ┌───────────────────┐
 │    validate.py    │    │  Logisim-ITA GUI  │    │    CircRun.java   │
-│  gate-level check │    │    manual poke    │    │  runner.py, tick  │
+│  gate-level check │    │    manual poke    │    │  per-vector drive │
 └───────────────────┘    └───────────────────┘    └───────────────────┘
-    combinational      transistor / subcircuit         sequential
+  single-bit comb.         transistor level      multi-bit + sequential
 ```
 
 `references/` holds the format manual, the component port table, the sequential-test protocol, and the platform notes. `SKILL.md` is the operating procedure that ties them together.
@@ -118,6 +118,7 @@ The self-test builds a 2-to-1 multiplexer from a minimal template, simulates all
 | `references/timing-verification.md` | Sequential-circuit test and acceptance protocol, plus the digital-clock reference build |
 | `references/platform-notes.md` | Evaluation mechanics, clock conventions, external library references, transfer channels |
 | `references/exp1-tasks.md` | The five Lab 1 tasks as a worked example and regression source |
+| `references/exp4-tasks.md` | Lab 4 arithmetic parts: adders, the 32-bit barrel shifter, the ALU control encoding, and the cross-file dependency map |
 | `scripts/*.py` | Parser, gate-level simulator, validator, text emitter, runner wrapper, self-test |
 | `scripts/*.java` | Headless engine driver, dangling-endpoint lister, port dumper, load-error capture |
 
@@ -125,8 +126,9 @@ The self-test builds a 2-to-1 multiplexer from a minimal template, simulates all
 
 | Circuit kind | Tool | What it proves |
 |---|---|---|
-| Combinational (AND/OR/NOT and friends) | `validate.py` | every row of the truth table matches |
-| Transistor level or subcircuit | Logisim-ITA GUI | the netlist behaves under manual pokes |
+| Single-bit combinational (AND/OR/NOT and friends) | `validate.py` | every row of the truth table matches |
+| Multi-bit combinational (buses, multiplexers, subcircuit instances) | `CircRun.java` + `runner.py` | every vector row matches when read back with `snap` |
+| Transistor level (including transmission gates) | Logisim-ITA GUI | the netlist behaves under manual pokes |
 | Sequential (flip-flops, registers, counters) | `CircRun.java` + `runner.py` | state sequence matches per clock edge |
 
 The sequential path also covers structural checks: `Conn` lists dangling endpoints, `Dump` prints the port coordinate a component actually exposes, and `ErrLoad` returns the load error text that the GUI would otherwise swallow.

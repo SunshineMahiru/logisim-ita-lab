@@ -13,15 +13,15 @@
 ## 特点
 
 - **把电路当文本处理。** `.circ` 是 UTF-8 编码的 XML，电路可以生成、比对、审阅，不必在图形界面里逐个点击。
-- **按电路类型分两条验证路径。** 组合逻辑走门级仿真对拍；时序逻辑走真实引擎，逐拍驱动。
+- **按电路类型分四条验证路径。** 单比特组合逻辑走门级仿真对拍；多比特与时序逻辑走真实引擎，逐行或逐拍驱动；晶体管级在图形界面里核对。
 - **坐标是量出来的。** 组件端口坐标由 Logisim-ITA 2.16.2.0 的 dump 工具读回，文档记录的是观察到的值。
 - **Python 只用标准库。** 解析器、门级仿真器、真值表对拍都不需要第三方包；只有跑真实引擎时才需要 Java。
-- **附带任务知识库。** `references/exp1-tasks.md` 记录实验1 的 5 个任务：逻辑、引脚、真值表、拓扑、坐标。
+- **附带任务知识库。** `references/exp1-tasks.md` 与 `references/exp4-tasks.md` 记录实验1 与实验4：逻辑、引脚、真值表、拓扑、端口坐标与 ALU 控制编码。
 - **离线自检。** `scripts/selftest.py` 串起「解析 → 生成 → 仿真 → 对拍」全链路，不依赖 Java。
 
 ## 架构
 
-工作流的输入是题面加模板 `.circ`，中间产物是一份待验证的 `.circ`，然后按电路类型分流到三条验证路径。
+工作流的输入是题面加模板 `.circ`，中间产物是一份待验证的 `.circ`，然后按电路类型分流到四条验证路径；图中按工具归并。
 
 ```text
 ┌───────────────────┐    ┌───────────────────┐    ┌───────────────────┐
@@ -37,9 +37,9 @@
           ▼                        ▼                        ▼
 ┌───────────────────┐    ┌───────────────────┐    ┌───────────────────┐
 │    validate.py    │    │  Logisim-ITA GUI  │    │    CircRun.java   │
-│  gate-level check │    │    manual poke    │    │  runner.py, tick  │
+│  gate-level check │    │    manual poke    │    │  per-vector drive │
 └───────────────────┘    └───────────────────┘    └───────────────────┘
-    combinational      transistor / subcircuit         sequential
+  single-bit comb.         transistor level      multi-bit + sequential
 ```
 
 `references/` 放格式手册、组件端口表、时序测试规程与平台笔记；`SKILL.md` 是串起这些材料的操作流程。
@@ -118,6 +118,7 @@ SELFTEST: ALL PASS
 | `references/timing-verification.md` | 时序电路测试与验收规程，附数字时钟参考形态 |
 | `references/platform-notes.md` | 评测机制、时钟约定、外部库引用、文件传输通道 |
 | `references/exp1-tasks.md` | 实验1 的 5 个任务，兼作范例格式与回归真值表来源 |
+| `references/exp4-tasks.md` | 实验4 运算部件：加法器系列、32 位桶形移位器、ALU 控制编码与跨文件依赖 |
 | `scripts/*.py` | 解析器、门级仿真器、对拍入口、文本生成库、跑测封装、自检 |
 | `scripts/*.java` | 无头引擎驱动、悬空端点列表、端口坐标打印、加载错误捕获 |
 
@@ -125,8 +126,9 @@ SELFTEST: ALL PASS
 
 | 电路类型 | 工具 | 能确认什么 |
 |---|---|---|
-| 组合逻辑（AND/OR/NOT 等） | `validate.py` | 真值表逐行一致 |
-| 晶体管级或子电路 | Logisim-ITA 图形界面 | 手动 poke 下网络行为正确 |
+| 单比特组合逻辑（AND/OR/NOT 等） | `validate.py` | 真值表逐行一致 |
+| 多比特组合逻辑（总线、选择器、子电路实例） | `CircRun.java` + `runner.py` | 每行向量用 `snap` 读回后与期望一致 |
+| 晶体管级（含传输门） | Logisim-ITA 图形界面 | 手动 poke 下网络行为正确 |
 | 时序电路（触发器、寄存器、计数器） | `CircRun.java` + `runner.py` | 状态序列逐拍一致 |
 
 时序这条路径还包含结构检查：`Conn` 列出悬空端点，`Dump` 打印组件的真实端口坐标，`ErrLoad` 取回被图形界面吞掉的加载错误文案。
